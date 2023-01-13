@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BuyingAndSelling", "BuyingAndSelling\BuyingAndSelling.csproj", "{D1C0A0C3-2D6D-4FCC-AAAC-BE54A8894ED8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BuyingAndSelling", "BuyingAndSelling\BuyingAndSelling.csproj", "{D1C0A0C3-2D6D-4FCC-AAAC-BE54A8894ED8}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatabaseLayer", "DatabaseLayer\DatabaseLayer.csproj", "{EABAF2DD-F09F-420F-8F0E-26EFE3E58F53}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Model", "Model\Model.csproj", "{7237BDB2-EE07-4BBE-B2BD-AE4886FFE170}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{D1C0A0C3-2D6D-4FCC-AAAC-BE54A8894ED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1C0A0C3-2D6D-4FCC-AAAC-BE54A8894ED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1C0A0C3-2D6D-4FCC-AAAC-BE54A8894ED8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EABAF2DD-F09F-420F-8F0E-26EFE3E58F53}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EABAF2DD-F09F-420F-8F0E-26EFE3E58F53}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EABAF2DD-F09F-420F-8F0E-26EFE3E58F53}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EABAF2DD-F09F-420F-8F0E-26EFE3E58F53}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7237BDB2-EE07-4BBE-B2BD-AE4886FFE170}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7237BDB2-EE07-4BBE-B2BD-AE4886FFE170}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7237BDB2-EE07-4BBE-B2BD-AE4886FFE170}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7237BDB2-EE07-4BBE-B2BD-AE4886FFE170}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
