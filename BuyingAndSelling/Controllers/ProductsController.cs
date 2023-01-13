@@ -35,7 +35,7 @@ namespace BuyingAndSelling.Controllers
 
         }
         [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody] Product product)
+        public async Task<IActionResult> PostAsync([FromBody] Product product, [FromBody] List<ProductTag> productTags) 
         {
             var returnData = new ApiResponseSuccess<Dictionary<string, object>>();
             string userId = "1";
@@ -44,7 +44,7 @@ namespace BuyingAndSelling.Controllers
             {
                 var did = await _mediator.Send(new InsertProductCommand(userId, product));
 
-                if(!string.IsNullOrEmpty(did))
+                if(!string.IsNullOrEmpty(did) && productTags.Count>0)
                 {
                     //save tag name
                 }
