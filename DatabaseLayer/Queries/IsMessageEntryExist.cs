@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace DatabaseLayer.Queries
 {
-    public class IsProductExist : IRequest<bool>    
+    public class IsMessageEntryExist : IRequest<bool>     
     {
-        public string Did { get; set; }   
-        public string Name { get; set; }   
-        public string Model { get; set; }   
+        public string ProductId { get; set; }   
+        public string SellerId { get; set; }   
+        public string BuyerId { get; set; }   
     }
 }

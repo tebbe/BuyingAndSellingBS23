@@ -10,6 +10,8 @@ namespace Model.DBModel
     {
         public string Product { get; set; }
         public string ProductTag { get; set; }
+        public string Message { get; set; }
+        public string MessageDetail { get; set; }
 
     }
 }
