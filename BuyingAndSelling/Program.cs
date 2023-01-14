@@ -19,6 +19,7 @@ builder.Services.Configure<DBCollections>(builder.Configuration.GetSection("DBCo
 
 builder.Services.AddSingleton<IDBContext, MongoDBContext>();
 builder.Services.AddSingleton<ProductDal>();
+builder.Services.AddSingleton<ProductTagDal>();
 builder.Services.AddMediatR(typeof(DatabseLayerStartup).Assembly);
 
 builder.Services.AddControllers();

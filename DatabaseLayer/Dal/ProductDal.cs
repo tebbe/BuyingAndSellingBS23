@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -19,7 +20,7 @@ namespace DatabaseLayer.Dal
     {
         private readonly IDBContext _dbContext;
 
-        public ProductDal(IDBContext dbContext) 
+        public ProductDal(IDBContext dbContext)
         {
             _dbContext = dbContext;
             if (!BsonClassMap.IsClassMapRegistered(typeof(Product)))
@@ -32,72 +33,75 @@ namespace DatabaseLayer.Dal
             }
         }
 
-        public async Task<List<Dictionary<string, object>>> GetAsync(string tagCollectionName,string collectionName, string name="",string tagName="")
+        public async Task<List<Dictionary<string, object>>> GetAsync(string tagCollectionName, string collectionName, string name = "", string tagName = "")
         {
             try
             {
                 var _productCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Product>(collectionName);
-                //for serch operation document mention about "and" query but i impemented "or" query because 
-                //can be search using product name or tagname
-                BsonDocument filter = new BsonDocument { { "$match", new BsonDocument("$and", new BsonArray().Add(new BsonDocument("IsActive", true))) } };
+                
+                BsonDocument filter = new BsonDocument();
 
-               if (!string.IsNullOrEmpty(name) || !string.IsNullOrEmpty(tagName))
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(tagName))
                 {
-                    //filter = new BsonDocument{ { "$match",
-                    //new BsonDocument("$or", new BsonArray().Add(new BsonDocument("Name", new BsonDocument("$regex",name ).Add("$options", "i")))
-                    //.Add(new BsonDocument("TagName", new BsonDocument("$regex", tagName ).Add("$options", "i")))) } };
-
-                    new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray().Add(new BsonDocument("IsActive",true))
-                    .Add(new BsonDocument("$or", new BsonArray().Add(new BsonDocument("Name", new BsonDocument("$regex",name ).Add("$options", "i")))
-                    .Add(new BsonDocument("TagName", new BsonDocument("$regex", tagName ).Add("$options", "i")))))) } };
-                };
-
+                    filter = new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
+                    .Add(new BsonDocument("Name", new BsonDocument("$regex",name ).Add("$options", "i")))
+                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName ).Add("$options", "i")))) } };
+                }
+                else if (!string.IsNullOrEmpty(name))
+                {
+                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", name).Add("$options", "i")) } };
+                }
+                else if (!string.IsNullOrEmpty(tagName))
+                {
+                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName).Add("$options", "i")) } };
+                }
+                else
+                {
+                    filter = new BsonDocument { {"$match", new BsonDocument("Name", new BsonDocument("$ne", ""))}};
+                }
+            
+                //
                 var pipeline = new BsonDocument[] {
+                    new BsonDocument("$match", new BsonDocument("IsActive", true)),
                     new BsonDocument("$lookup",
                     new BsonDocument
                         {
                             { "from", tagCollectionName.ToString() },
                             { "localField", "Did" },
                             { "foreignField", "ProductId" },
-                            { "as", "results" }
+                            { "as", "ProductTag" }
                         }),
-
                     new BsonDocument("$project",
                     new BsonDocument
                         {
-                            { "Name", 1 },
-                            { "BrandName", 2 },
-                            { "Model", 3 },
-                            { "Addition", 4 },
-                            { "Detail", 5 },
-                            { "Contact", 6 },
-                            { "Did", 7},
-                            { "TagName", "$results.TagName" }
+                            { "_id", 0 },{ "IsActive", 1 },{ "Name", 1 },{ "BrandName", 1 },
+                            { "Model", 1 },{ "Addition",1},{ "Detail", 1 },{ "Contact", 1},
+                            { "Did", 1},{ "ProductTag", 1}
+
                         }),
                     filter
 
                 };
 
-
                 var m = await _productCollection.AggregateAsync<Dictionary<string, object>>(pipeline);
                 var result = await m.ToListAsync();
                 return result.ToList();
             }
-            catch
+            catch(Exception ex)
             {
                 throw;
             }
 
         }
 
-        public async Task<long> GetTotalCountAsync(string tagCollectionName, string collectionName,string name="",string tagName="")
+        public async Task<long> GetTotalCountAsync(string tagCollectionName, string collectionName, string name = "", string tagName = "")
         {
             try
             {
-                var _productCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Dictionary<string,object>>(collectionName);
+                var _productCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Dictionary<string, object>>(collectionName);
                 //for serch operation document mention about "and" query but i impemented "or" query because 
                 //can be search using product name or tagname
-                BsonDocument filter = new BsonDocument { };
+                BsonDocument filter = new BsonDocument { { "$match", new BsonDocument("$and", new BsonArray().Add(new BsonDocument("IsActive", true))) } };
 
                 if (!string.IsNullOrEmpty(name) || !string.IsNullOrEmpty(tagName))
                 {
@@ -133,7 +137,7 @@ namespace DatabaseLayer.Dal
                 };
 
 
-                var m = await _productCollection.AggregateAsync<Dictionary<string,object>>(pipeline);
+                var m = await _productCollection.AggregateAsync<Dictionary<string, object>>(pipeline);
                 return m.ToList().Count;
 
             }
@@ -144,7 +148,7 @@ namespace DatabaseLayer.Dal
 
         }
 
-        public async Task<bool> IsExist(string collectionName, string name,string model, string did = "")
+        public async Task<bool> IsExist(string collectionName, string name, string model, string did = "")
         {
             var _collection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Dictionary<string, object>>(collectionName);
             bool isExist = false;
@@ -208,7 +212,7 @@ namespace DatabaseLayer.Dal
         //            .Set(m => m.Contact, product.Contact)
         //            .Set(m => m.UpdateBy, product.UpdateBy)
         //            .Set(m => m.UpdateDate, product.UpdateDate);
-                  
+
 
         //        await _rolesCollection.UpdateOneAsync(filter, update);
         //        return product.Id;

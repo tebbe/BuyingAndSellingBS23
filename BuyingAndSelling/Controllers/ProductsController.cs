@@ -35,18 +35,18 @@ namespace BuyingAndSelling.Controllers
 
         }
         [HttpPost]
-        public async Task<IActionResult> PostAsync([FromBody] Product product, [FromBody] List<ProductTag> productTags) 
+        public async Task<IActionResult> PostAsync([FromBody] ProductMappingModel productMapping) 
         {
             var returnData = new ApiResponseSuccess<Dictionary<string, object>>();
             string userId = "1";
 
-            if (!IsExist(product.Name, product.Model).Result)
+            if (!IsExist(productMapping.Name, productMapping.Model).Result)
             {
-                var did = await _mediator.Send(new InsertProductCommand(userId, product));
+                var did = await _mediator.Send(new InsertProductCommand(userId, productMapping));
 
-                if(!string.IsNullOrEmpty(did) && productTags.Count>0)
+                if(!string.IsNullOrEmpty(did) && productMapping.ProductTags.Count>0)
                 {
-                    //save tag name
+                  await _mediator.Send(new InsertProductTagCommand(userId,did, productMapping.ProductTags));
                 }
                 returnData.statusCode = StatusCodes.Status200OK;
                 returnData.status = "success";
@@ -64,7 +64,6 @@ namespace BuyingAndSelling.Controllers
             }
 
         }
-
         
         private async Task<bool> IsExist(string name, string model)
         {

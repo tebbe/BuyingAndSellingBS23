@@ -10,11 +10,16 @@ namespace DatabaseLayer.Commands
 {
     public class InsertProductCommand:IRequest<string>
     {
-        public Product ProductModel { get; set; }
-        public InsertProductCommand(string userId, Product model)
+        public Product ProductModel { get; set; } = new Product();
+        public InsertProductCommand(string userId, ProductMappingModel mappingModel)
         {
-            ProductModel = model;
             ProductModel.Did = Guid.NewGuid().ToString("N");
+            ProductModel.Name=mappingModel.Name;
+            ProductModel.BrandName= mappingModel.BrandName;
+            ProductModel.Model= mappingModel.Model;
+            ProductModel.Addition = mappingModel.Addition;
+            ProductModel.Contact = mappingModel.Contact;
+            ProductModel.Detail = mappingModel.Detail;
             ProductModel.CreatedBy = userId;
             ProductModel.CreatedDate = DateTime.Now;
 
