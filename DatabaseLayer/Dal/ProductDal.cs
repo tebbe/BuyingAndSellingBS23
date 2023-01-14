@@ -41,19 +41,19 @@ namespace DatabaseLayer.Dal
                 
                 BsonDocument filter = new BsonDocument();
 
-                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(tagName))
+                if (!string.IsNullOrEmpty(name.Trim()) && !string.IsNullOrEmpty(tagName.Trim()))
                 {
                     filter = new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
-                    .Add(new BsonDocument("Name", new BsonDocument("$regex",name ).Add("$options", "i")))
-                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName ).Add("$options", "i")))) } };
+                    .Add(new BsonDocument("Name", new BsonDocument("$regex",name.Trim() ).Add("$options", "i")))
+                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim() ).Add("$options", "i")))) } };
                 }
                 else if (!string.IsNullOrEmpty(name))
                 {
-                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", name).Add("$options", "i")) } };
+                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", name.Trim()).Add("$options", "i")) } };
                 }
                 else if (!string.IsNullOrEmpty(tagName))
                 {
-                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName).Add("$options", "i")) } };
+                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim()).Add("$options", "i")) } };
                 }
                 else
                 {
@@ -66,7 +66,7 @@ namespace DatabaseLayer.Dal
                     new BsonDocument("$lookup",
                     new BsonDocument
                         {
-                            { "from", tagCollectionName.ToString() },
+                            { "from", tagCollectionName.Trim().ToString() },
                             { "localField", "Did" },
                             { "foreignField", "ProductId" },
                             { "as", "ProductTag" }
@@ -99,42 +99,51 @@ namespace DatabaseLayer.Dal
             try
             {
                 var _productCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Dictionary<string, object>>(collectionName);
-                //for serch operation document mention about "and" query but i impemented "or" query because 
-                //can be search using product name or tagname
-                BsonDocument filter = new BsonDocument { { "$match", new BsonDocument("$and", new BsonArray().Add(new BsonDocument("IsActive", true))) } };
 
-                if (!string.IsNullOrEmpty(name) || !string.IsNullOrEmpty(tagName))
+                BsonDocument filter = new BsonDocument();
+
+                if (!string.IsNullOrEmpty(name.Trim()) && !string.IsNullOrEmpty(tagName.Trim()))
                 {
+                    filter = new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
+                    .Add(new BsonDocument("Name", new BsonDocument("$regex",name.Trim() ).Add("$options", "i")))
+                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim() ).Add("$options", "i")))) } };
+                }
+                else if (!string.IsNullOrEmpty(name))
+                {
+                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", name.Trim()).Add("$options", "i")) } };
+                }
+                else if (!string.IsNullOrEmpty(tagName))
+                {
+                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim()).Add("$options", "i")) } };
+                }
+                else
+                {
+                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$ne", "")) } };
+                }
 
-                    new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray().Add(new BsonDocument("IsActive",true))
-                    .Add(new BsonDocument("$or", new BsonArray().Add(new BsonDocument("Name", new BsonDocument("$regex",name ).Add("$options", "i")))
-                    .Add(new BsonDocument("TagName", new BsonDocument("$regex", tagName ).Add("$options", "i")))))) } };
-                };
-
+                //
                 var pipeline = new BsonDocument[] {
+                    new BsonDocument("$match", new BsonDocument("IsActive", true)),
                     new BsonDocument("$lookup",
                     new BsonDocument
                         {
-                            { "from", tagCollectionName.ToString() },
+                            { "from", tagCollectionName.Trim().ToString() },
                             { "localField", "Did" },
                             { "foreignField", "ProductId" },
-                            { "as", "results" }
+                            { "as", "ProductTag" }
                         }),
-
                     new BsonDocument("$project",
                     new BsonDocument
                         {
-                            { "Name", 1 },
-                            { "BrandName", 2 },
-                            { "Model", 3 },
-                            { "Addition", 4 },
-                            { "Detail", 5 },
-                            { "Did", 6}
-                            //{ "TagName", "$results.TagName" }
+                            { "_id", 0 },{ "IsActive", 1 },{ "Name", 1 },{ "BrandName", 1 },
+                            { "Model", 1 },{ "Addition",1},{ "Detail", 1 },{ "Contact", 1},
+                            { "Did", 1},{ "ProductTag", 1}
+
                         }),
                     filter
 
                 };
+
 
 
                 var m = await _productCollection.AggregateAsync<Dictionary<string, object>>(pipeline);
@@ -194,34 +203,5 @@ namespace DatabaseLayer.Dal
                 throw;
             }
         }
-
-        //public async Task<string> UpdateAsync(string collectionName, Product product)
-        //{
-        //    try
-        //    {
-        //        var _rolesCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Product>(collectionName);
-        //        var filter = Builders<Product>.Filter.Eq(s => s.Id, product.Id);
-
-        //        var update = Builders<Product>.Update
-        //            .Set(m => m.Name, product.Name)
-        //            .Set(m => m.BrandName, product.BrandName)
-        //            .Set(m => m.Addition, product.Addition)
-        //            .Set(m => m.Model, product.Model)
-        //            .Set(m => m.Detail, product.Detail)
-        //            .Set(m => m.IsUsed, product.IsUsed)
-        //            .Set(m => m.Contact, product.Contact)
-        //            .Set(m => m.UpdateBy, product.UpdateBy)
-        //            .Set(m => m.UpdateDate, product.UpdateDate);
-
-
-        //        await _rolesCollection.UpdateOneAsync(filter, update);
-        //        return product.Id;
-        //    }
-        //    catch
-        //    {
-        //        throw;
-        //    }
-        //}
-
     }
 }

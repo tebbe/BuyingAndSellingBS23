@@ -13,5 +13,6 @@ namespace DatabaseLayer.Commands
     public class UpdateBlockUserCommand:IRequest<bool>
     {
         public string Did { get; set; }
+        public bool IsBuyerBlock { get; set; }  
     }
 }

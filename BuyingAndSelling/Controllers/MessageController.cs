@@ -61,12 +61,12 @@ namespace BuyingAndSelling.Controllers
         }
 
         [HttpPost]
-        [Route("blockbuyer/{did}")]
-        public async Task<IActionResult> PutAsync(string did)
+        [Route("blockbuyer/{did}/{isblock}")]
+        public async Task<IActionResult> PutAsync(string did,bool isblock)
         {
             var returnData = new ApiResponseSuccess<bool>();
 
-            bool data =await _mediator.Send(new UpdateBlockUserCommand { Did = did });
+            bool data =await _mediator.Send(new UpdateBlockUserCommand { Did = did,IsBuyerBlock=isblock });
 
             returnData.statusCode = StatusCodes.Status200OK;
             returnData.status = "success";

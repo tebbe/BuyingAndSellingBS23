@@ -28,7 +28,7 @@ namespace DatabaseLayer.Handlers
         {
             try
             {
-                return await _messageDal.UpdateAsync(_dbCollections.Value.Message, request.Did);
+                return await _messageDal.UpdateAsync(_dbCollections.Value.Message, request.Did,request.IsBuyerBlock);
             }
             catch
             {

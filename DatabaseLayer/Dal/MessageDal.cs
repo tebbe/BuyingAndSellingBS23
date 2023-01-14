@@ -40,15 +40,15 @@ namespace DatabaseLayer.Dal
                 var _productCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Message>(collectionName);
 
                 BsonDocument filter = new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
-                    .Add(new BsonDocument("ProductId", new BsonDocument("$regex",productId).Add("$options", "i")))
-                    .Add(new BsonDocument("BuyerId", new BsonDocument("$regex",buyerId).Add("$options", "i")))
-                    .Add(new BsonDocument("SellerId", new BsonDocument("$regex", sellerId).Add("$options", "i")))) } };
+                    .Add(new BsonDocument("ProductId", new BsonDocument("$regex",productId.Trim()).Add("$options", "i")))
+                    .Add(new BsonDocument("BuyerId", new BsonDocument("$regex",buyerId.Trim()).Add("$options", "i")))
+                    .Add(new BsonDocument("SellerId", new BsonDocument("$regex", sellerId.Trim()).Add("$options", "i")))) } };
 
                 var pipeline = new BsonDocument[] {
                     new BsonDocument("$lookup",
                     new BsonDocument
                         {
-                            { "from", messageDetailCollectionName.ToString() },
+                            { "from", messageDetailCollectionName.Trim().ToString() },
                             { "localField", "Did" },
                             { "foreignField", "MessageId" },
                             { "as", "MessageDetail" }
@@ -82,9 +82,9 @@ namespace DatabaseLayer.Dal
 
             var pipeline = new BsonDocument[] {
                     new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
-                    .Add(new BsonDocument("ProductId",new BsonDocument("$eq", productId)))
-                    .Add(new BsonDocument("SellerId",new BsonDocument("$eq", sellerId)))
-                    .Add(new BsonDocument("BuyerId",new BsonDocument("$eq", buyerId)))
+                    .Add(new BsonDocument("ProductId",new BsonDocument("$eq", productId.Trim())))
+                    .Add(new BsonDocument("SellerId",new BsonDocument("$eq", sellerId.Trim())))
+                    .Add(new BsonDocument("BuyerId",new BsonDocument("$eq", buyerId.Trim())))
 
                     ) } }};
 
@@ -110,15 +110,15 @@ namespace DatabaseLayer.Dal
             }
         }
 
-        public async Task<bool> UpdateAsync(string collectionName,string did)
+        public async Task<bool> UpdateAsync(string collectionName,string did,bool isBlockBuyer)
         {
             try
             {
                 var _collection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Message>(collectionName);
 
-                var filter = Builders<Message>.Filter.Eq(s => s.Did, did);
+                var filter = Builders<Message>.Filter.Eq(s => s.Did, did.Trim());
                 var update = Builders<Message>.Update
-                  .Set(s => s.IsBlockBuyer, true);
+                  .Set(s => s.IsBlockBuyer, isBlockBuyer);
 
                 await _collection.UpdateOneAsync(filter,update);
                 return true;
