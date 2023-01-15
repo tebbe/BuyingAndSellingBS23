@@ -1,4 +1,5 @@
 ﻿using DatabaseLayer.DBContext;
+using DatabaseLayer.Queries;
 using MediatR;
 using Model;
 using Model.QueryString;
@@ -6,6 +7,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -33,7 +35,7 @@ namespace DatabaseLayer.Dal
             }
         }
 
-        public async Task<List<Dictionary<string, object>>> GetAsync(string tagCollectionName, string collectionName, string name = "", string tagName = "")
+        public async Task<List<Dictionary<string, object>>> GetAsync(string tagCollectionName, string collectionName, GetProductList queryString)
         {
             try
             {
@@ -41,19 +43,82 @@ namespace DatabaseLayer.Dal
                 
                 BsonDocument filter = new BsonDocument();
 
-                if (!string.IsNullOrEmpty(name.Trim()) && !string.IsNullOrEmpty(tagName.Trim()))
+                if (!string.IsNullOrEmpty(queryString.Name.Trim()) && !string.IsNullOrEmpty(queryString.TagName.Trim()))
                 {
                     filter = new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
-                    .Add(new BsonDocument("Name", new BsonDocument("$regex",name.Trim() ).Add("$options", "i")))
-                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim() ).Add("$options", "i")))) } };
+                    .Add(new BsonDocument("Name", new BsonDocument("$regex",queryString.Name.Trim() ).Add("$options", "i")))
+                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", queryString.TagName.Trim() ).Add("$options", "i")))) } };
                 }
-                else if (!string.IsNullOrEmpty(name))
+                else if (!string.IsNullOrEmpty(queryString.Name))
                 {
-                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", name.Trim()).Add("$options", "i")) } };
+                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", queryString.Name.Trim()).Add("$options", "i")) } };
                 }
-                else if (!string.IsNullOrEmpty(tagName))
+                else if (!string.IsNullOrEmpty(queryString.TagName))
                 {
-                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim()).Add("$options", "i")) } };
+                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", queryString.TagName.Trim()).Add("$options", "i")) } };
+                }
+                else
+                {
+                    filter = new BsonDocument { {"$match", new BsonDocument("Name", new BsonDocument("$ne", ""))}};
+                }
+            
+                //
+                var pipeline = new BsonDocument[] {
+                    new BsonDocument("$match", new BsonDocument("IsActive", true)),
+                    new BsonDocument("$lookup",
+                    new BsonDocument
+                        {
+                            { "from", tagCollectionName.Trim().ToString() },
+                            { "localField", "Did" },
+                            { "foreignField", "ProductId" },
+                            { "as", "ProductTag" }
+                        }),
+                    new BsonDocument("$project",
+                    new BsonDocument
+                        {
+                            { "_id", 0 },{ "IsActive", 1 },{ "Name", 1 },{ "BrandName", 1 },
+                            { "Model", 1 },{ "Addition",1},{ "Detail", 1 },{ "Contact", 1},
+                            { "Did", 1},{ "ProductTag", 1}
+
+                        }),
+                    filter,
+                    new BsonDocument{ { "$skip", queryString.Paging.Skip}},
+                    new BsonDocument{ { "$limit", queryString.Paging.Limit}}
+
+                };
+
+                var m = await _productCollection.AggregateAsync<Dictionary<string, object>>(pipeline);
+                var result = await m.ToListAsync();
+                return result.ToList();
+            }
+            catch(Exception ex)
+            {
+                throw;
+            }
+
+        }
+
+        public async Task<long> CountAsync(string tagCollectionName, string collectionName, ProductListCount query)
+        {
+            try
+            {
+                var _productCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Product>(collectionName);
+                
+                BsonDocument filter = new BsonDocument();
+
+                if (!string.IsNullOrEmpty(query.Name.Trim()) && !string.IsNullOrEmpty(query.TagName.Trim()))
+                {
+                    filter = new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
+                    .Add(new BsonDocument("Name", new BsonDocument("$regex",query.Name.Trim() ).Add("$options", "i")))
+                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", query.TagName.Trim() ).Add("$options", "i")))) } };
+                }
+                else if (!string.IsNullOrEmpty(query.Name))
+                {
+                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", query.Name.Trim()).Add("$options", "i")) } };
+                }
+                else if (!string.IsNullOrEmpty(query.TagName))
+                {
+                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", query.TagName.Trim()).Add("$options", "i")) } };
                 }
                 else
                 {
@@ -82,70 +147,6 @@ namespace DatabaseLayer.Dal
                     filter
 
                 };
-
-                var m = await _productCollection.AggregateAsync<Dictionary<string, object>>(pipeline);
-                var result = await m.ToListAsync();
-                return result.ToList();
-            }
-            catch(Exception ex)
-            {
-                throw;
-            }
-
-        }
-
-        public async Task<long> GetTotalCountAsync(string tagCollectionName, string collectionName, string name = "", string tagName = "")
-        {
-            try
-            {
-                var _productCollection = _dbContext.GetDataBase<IMongoDatabase>().GetCollection<Dictionary<string, object>>(collectionName);
-
-                BsonDocument filter = new BsonDocument();
-
-                if (!string.IsNullOrEmpty(name.Trim()) && !string.IsNullOrEmpty(tagName.Trim()))
-                {
-                    filter = new BsonDocument{ { "$match", new BsonDocument("$and", new BsonArray()
-                    .Add(new BsonDocument("Name", new BsonDocument("$regex",name.Trim() ).Add("$options", "i")))
-                    .Add(new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim() ).Add("$options", "i")))) } };
-                }
-                else if (!string.IsNullOrEmpty(name))
-                {
-                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$regex", name.Trim()).Add("$options", "i")) } };
-                }
-                else if (!string.IsNullOrEmpty(tagName))
-                {
-                    filter = new BsonDocument { { "$match", new BsonDocument("ProductTag.TagName", new BsonDocument("$regex", tagName.Trim()).Add("$options", "i")) } };
-                }
-                else
-                {
-                    filter = new BsonDocument { { "$match", new BsonDocument("Name", new BsonDocument("$ne", "")) } };
-                }
-
-                //
-                var pipeline = new BsonDocument[] {
-                    new BsonDocument("$match", new BsonDocument("IsActive", true)),
-                    new BsonDocument("$lookup",
-                    new BsonDocument
-                        {
-                            { "from", tagCollectionName.Trim().ToString() },
-                            { "localField", "Did" },
-                            { "foreignField", "ProductId" },
-                            { "as", "ProductTag" }
-                        }),
-                    new BsonDocument("$project",
-                    new BsonDocument
-                        {
-                            { "_id", 0 },{ "IsActive", 1 },{ "Name", 1 },{ "BrandName", 1 },
-                            { "Model", 1 },{ "Addition",1},{ "Detail", 1 },{ "Contact", 1},
-                            { "Did", 1},{ "ProductTag", 1}
-
-                        }),
-                    filter
-
-                };
-
-
-
                 var m = await _productCollection.AggregateAsync<Dictionary<string, object>>(pipeline);
                 return m.ToList().Count;
 

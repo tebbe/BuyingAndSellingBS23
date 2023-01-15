@@ -7,6 +7,7 @@ using Model;
 using Model.QueryString;
 using PremiseGlobalLibrary;
 using PremiseGlobalLibrary.Model;
+using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 
 namespace BuyingAndSelling.Controllers
@@ -22,14 +23,16 @@ namespace BuyingAndSelling.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAsync([FromQuery] ProductQueryModel queryModel)
+        public async Task<IActionResult> GetAsync([FromQuery] ProductQueryModel queryModel, [FromQuery] Pagination pagination)
         {
             var returnData = new ApiResponseSuccess<List<Dictionary<string, object>>>();
-            string userId = "1";
-            var data = await _mediator.Send(new GetProductList { UserId = userId, Name = queryModel.ProductName, TagName = queryModel.Tag });
+
+            var data = await _mediator.Send(new GetProductList { Name = queryModel.ProductName, TagName = queryModel.Tag,Paging= pagination });
+            var count = await _mediator.Send(new ProductListCount {Name = queryModel.ProductName, TagName = queryModel.Tag });
             returnData.statusCode = StatusCodes.Status200OK;
             returnData.status = "success";
             returnData.message = data.Count == 0 ? "No data found" : "";
+            HttpContext.Response.Headers.Add("X-Total-Count", count.ToString());
             returnData.data = data;
             return StatusCode(StatusCodes.Status200OK, returnData);
 

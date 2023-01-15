@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using Model;
 using Model.QueryString;
 using System;
 using System.Collections.Generic;
@@ -9,10 +8,9 @@ using System.Threading.Tasks;
 
 namespace DatabaseLayer.Queries
 {
-    public class GetProductList:IRequest<List<Dictionary<string,object>>>
+    public class ProductListCount:IRequest<long> 
     {
         public string? Name { get; set; } 
-        public string? TagName { get; set; }
-        public Pagination Paging { get; set; } 
+        public string? TagName { get; set; }   
     }
 }
